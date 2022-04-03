@@ -2,10 +2,10 @@
 
 // Define number of steps per rotation:
 int stepsperrev = 2048;
-// Max levels for blinder (reaching 1 for delay of 10 ms and speed of 10rpms takes 6s)
-//which means limit of 1 allows for 6 full revolutions.
-const int upper_max = 1;
-const int upper_min = -1;
+// Max levels for blinder (reaching 1 for delay of 10 ms and speed of 10rpms takes 6s) which means limit of 1 allows for 6 full revolutions
+// we start at closed blinder:
+const int upper_max = 2;
+const int upper_min = 0;
 // up, down, stop modes:
 const int up_code=(int)'u'+(int)'p';
 const int down_code=(int)'d'+(int)'n';
@@ -75,5 +75,4 @@ code = (int)cmd[0] + int(cmd[1]);
  stepper_m.step(stepsperrev);
     // Set the speed to 10 rpm:
   stepper_m.setSpeed(10);
-  delay(10);
 } 
