@@ -1,39 +1,40 @@
-// Sketch to control a 28BYJ-48 stepper motor with ULN2003 driver board and Arduino UNO. 
-
-// Include the Arduino Stepper.h library:
 #include <Stepper.h>
 
 // Define number of steps per rotation:
-int steps_per_rev = 2048;
+int stepsperrev = 2048;
+// Max levels for blinder (reaching 1 for delay of 10 ms and speed of 10rpms takes 6s)
+//which means limit of 1 allows for 6 full revolutions.
+const int upper_max = 1;
+const int upper_min = -1;
+// up, down, stop modes:
+const int up_code=(int)'u'+(int)'p';
+const int down_code=(int)'d'+(int)'n';
+const int stop_code=(int)'s'+(int)'t';
+int code=stop_code;
+int steps=0;
+//define the command array:
+char cmd[4]={0,0,0,0};
+// Create stepper object called 'stepper_m', note the pin order:
+Stepper stepper_m = Stepper(stepsperrev, 8, 10, 9, 11);
 
 
-const int UPPER_MAX_POS = 20;
-const int LOWER_MAX_POS = -20;
-
-const int UP_CODE = (int)'u' + (int)'p';
-const int STOP_CODE = (int)'s' + (int)'t';
-const int DOWN_CODE = (int)'d' + (int)'n';
-int code = STOP_CODE;
-
-int steps = 0;
-int step_level = 0;
-
-// Stepper(ammountofsteps, pin1, pin2, pin3, pin4);
-Stepper int_stepper = Stepper(steps_per_rev, 8, 10, 9, 11);
+// Wiring:
+// Pin 8 to IN1 on the ULN2003 driver
+// Pin 9 to IN2 on the ULN2003 driver
+// Pin 10 to IN3 on the ULN2003 driver
+// Pin 11 to IN4 on the ULN2003 driver
 
 void setup() {
-  // Set the speed to 5 rpm:
-  int_stepper.setSpeed(50);
-  
   // Begin Serial communication at a baud rate of 9600:
   Serial.begin(9600);
 }
-char cmd[4] = {0,0,0,0};
-
 
 void loop() {
-  // Read command
-  if (Serial.available() > 0) {
+  //do not move at the start of the program
+   stepsperrev = 0;
+   
+  //read command:
+if (Serial.available() > 0) {
     delay(10);
     short i=0;
     while(Serial.available() > 0 && i < 4) 
@@ -42,36 +43,37 @@ void loop() {
       i++;
     }
   }
- code = (int)cmd[0] + int(cmd[1]);
+code = (int)cmd[0] + int(cmd[1]);
+
+    //stop when max is reached
+  if (steps >= upper_max && code!=down_code){
+    code = stop_code;
+  }
+    if (steps <= upper_min && code!=up_code){
+    code = stop_code;
+    }
+
 
   switch (code){
-   case UP_CODE:
-     // Step one revolution in one direction:
-      //steps_per_rev = 2048;
-      //Serial.println("clockwise");
-      steps = 2;
+   case up_code:
+      steps++;
+      stepsperrev = 2048;
      break;
      
-     case DOWN_CODE:
-      // Step one revolution in the other direction:
-        //Serial.println("counterclockwise");
-        steps = -2;
-        break;
+     case down_code:
+      steps--;
+      stepsperrev = -2048;
+      break;
         
-     case STOP_CODE:
-     steps = 0;
-     
-     //Serial.println("stop");
+     case stop_code:
+     stepsperrev = 0;
      break;
+     
   default:
-  
   break;
  }
- int_stepper.step(steps);
- step_level += steps;
- delay(10);
-
-  if (step_level >= UPPER_MAX_POS){
-    code = STOP_CODE;
-  }
+ stepper_m.step(stepsperrev);
+    // Set the speed to 10 rpm:
+  stepper_m.setSpeed(10);
+  delay(10);
 } 
